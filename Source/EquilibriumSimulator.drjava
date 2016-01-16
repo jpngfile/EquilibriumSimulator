@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<drjava version="drjava-20130901-r5756">
+  <project autorefresh="false" main="Main" manifest="" root="" work="">
+    <createjar file="Equilibrium.jar" flags="12"/>
+    <source>
+      <file active="true" name="Main.java" package="" timestamp="10-Jun-2015 15:54:28">
+        <select from="658" to="658"/>
+        <scroll column="0" row="0"/>
+      </file>
+      <file name="ObstacleLine.java" package="" timestamp="31-Oct-2010 13:23:48">
+        <select from="658" to="658"/>
+        <scroll column="0" row="0"/>
+      </file>
+      <file name="ObstacleLineSegment.java" package="" timestamp="31-Oct-2010 13:26:56">
+        <select from="658" to="658"/>
+        <scroll column="0" row="0"/>
+      </file>
+      <file name="ContainerBox.java" package="" timestamp="08-Jun-2015 23:24:56">
+        <select from="658" to="658"/>
+        <scroll column="0" row="0"/>
+      </file>
+      <file name="Ball.java" package="" timestamp="08-Jun-2015 23:24:56">
+        <select from="658" to="658"/>
+        <scroll column="0" row="0"/>
+      </file>
+      <file name="collisionphysics/CollisionPhysics.java" package="collisionphysics" timestamp="31-May-2015 00:40:42">
+        <select from="658" to="658"/>
+        <scroll column="0" row="0"/>
+      </file>
+      <file name="collisionphysics/CollisionResponse.java" package="collisionphysics" timestamp="30-Oct-2010 02:17:08">
+        <select from="658" to="658"/>
+        <scroll column="0" row="0"/>
+      </file>
+      <file name="BallWorld.java" package="" timestamp="10-Jun-2015 15:59:20">
+        <select from="658" to="658"/>
+        <scroll column="0" row="0"/>
+      </file>
+    </source>
+    <included/>
+    <excluded/>
+    <collapsed>
+      <path name="./[ Source Files ]/collisionphysics/"/>
+    </collapsed>
+    <classpath/>
+    <breakpoints/>
+    <watches/>
+    <bookmarks/>
+    <preferences/>
+  </project>
+</drjava>

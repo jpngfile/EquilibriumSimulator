@@ -1,0 +1,756 @@
+import java.awt.*;
+import java.awt.image.*;
+import java.awt.event.*;
+import javax.swing.*;
+import javax.swing.event.*;
+import java.io.*;
+import javax.imageio.*;
+import java.util.Random;
+/**
+ * The control logic and main display panel for game.
+ * 
+ * @author Hock-Chuan Chua  by Jason P'ng
+ * @version June 2015
+ */
+//Error: buttons don't enable when a ball has been removed
+public class BallWorld extends JPanel {
+  private static final int UPDATE_RATE = 30;    // Frames per second (fps)
+  private static final float EPSILON_TIME = 1e-2f;  // Threshold for zero time
+  
+  // Balls
+  private static final int MAX_BALLS = 100; // Max number allowed 
+  private int currentNumBalls;             // Number currently active
+  private int aBalls,bBalls;               // Number of balls on either side
+  private Ball[] balls = new Ball[MAX_BALLS];
+  private static int ballRadius = 5;
+  
+  // The obstacles
+  private ContainerBox box;               // The container box
+  private ObstacleLineSegment lanuchTube; // The launching tube for new balls
+  private ObstacleLine cornerTopLeft;     // Line at the top-left corner 
+  private ObstacleLine cornerTopRight;    // Line at the top-right corner
+  private ObstacleLineSegment line;       // The line obstacle
+  private ObstaclePolygon polygon1;       // A polygon obstacle
+  private ObstaclePolygon polygon2;       // A polygon obstacle
+  private ObstacleCircle circle;          // A circle obstacle
+  
+  private ObstacleLineSegment horizontalLine; //line across the bottom
+  private ContainerBox centreBox; //The dividing box
+  private ContainerBox leftBox; //box on the left side
+  private ContainerBox rightBox; //box on the right side
+  private ObstacleLineSegment arbLine;
+  
+  private DrawCanvas canvas;    // The Custom canvas for drawing the box/ball
+  private int canvasWidth;
+  private int canvasHeight;
+  
+  private ControlPanel control; // The control panel of buttons and sliders.
+  private boolean paused = false;  // Flag for pause/resume control
+  
+  private int cMouseX, cMouseY; //keep track of the current position of the mouse
+  private int mouseX,mouseY; //Keep track of where the mouse was pressed
+  private int rX,rY,lx,ly; //Keep track of the original locations of the platforms
+  private int yDiff; //Difference between where the mouse is and where it was clicked
+  /**
+   * Constructor to create the UI components and init the game objects.
+   * Set the drawing canvas to fill the screen (given its width and height).
+   * 
+   * @param width : screen width
+   * @param height : screen height
+   */
+  public BallWorld(int width, int height) {
+    
+    final int controlHeight = 30; 
+    
+    
+    canvasWidth = width;
+    canvasHeight = height;
+    
+    // Init the Container Box to fill the screen
+    box = new ContainerBox(0, 0, canvasWidth, canvasHeight, Color.WHITE, Color.WHITE);
+    
+    // Init the obstacle blocks
+//      lanuchTube = new ObstacleLineSegment(32, canvasHeight - 160, 32, canvasHeight, Color.WHITE);
+//      cornerTopLeft  = new ObstacleLine(0, 50, 100, 0, Color.WHITE);
+//      cornerTopRight = new ObstacleLine(canvasWidth, 200, canvasWidth - 90, 0, Color.WHITE);
+//      line = new ObstacleLineSegment(36, 80, 100, 50, Color.WHITE);
+//      int[] polygon1Xs = {500, 630, 450, 380};
+//      int[] polygon1Ys = {280, 350, 420, 360};
+//      polygon1 = new ObstaclePolygon(polygon1Xs, polygon1Ys, Color.WHITE);
+//      int[] polygon2Xs = {150, 250, 350};
+//      int[] polygon2Ys = {550, 400, 550};
+//      polygon2 = new ObstaclePolygon(polygon2Xs, polygon2Ys, Color.WHITE);
+//      circle =  new ObstacleCircle(400, -30, 100, Color.WHITE); 
+    //horizontalLine = new ObstacleLineSegment (0,400,1000,400,Color.WHITE);
+    centreBox = new ContainerBox (width/2 - 25,200,50,canvasHeight-100,Color.BLACK,Color.WHITE);
+    rightBox = new ContainerBox (width/2 + 25,250,width/2 - 25,50,Color.BLACK,Color.WHITE);
+    rX = rightBox.minX;rY = rightBox.minY;
+    leftBox = new ContainerBox (0,250,width/2 - 25,50,Color.BLACK,Color.WHITE);
+    lx = leftBox.minX;ly = leftBox.minY;
+//    arbLine = new ObstacleLineSegment (300,300,300,canvasHeight,Color.WHITE);
+//      currentNumBalls = 1;
+//      balls[0] = new Ball(300, 70, 50, 20, 30, Color.YELLOW);
+//      balls[1] = new Ball(300, 300, 100, 6, -90, Color.YELLOW);
+    
+//      currentNumBalls = 5;  // 2 vertical balls
+//      balls[0] = new Ball(300, 100, 25, -5, 90, Color.GREEN);
+//      balls[1] = new Ball(300, 200, 25, 6, 90, Color.YELLOW);
+//      balls[2] = new Ball(300, 370, 25, -1, 90, Color.CYAN);
+//      balls[3] = new Ball(300, 370, 25, 4, 90, Color.PINK);
+//      balls[4] = new Ball(300, 450, 25, -3, 90, Color.MAGENTA);
+    
+    // Error here, balls run across each other, need to write log to check the program.
+//        currentNumBalls = 5;  // horizontal balls
+//        balls[0] = new Ball(100, 300, 25, -5, 0, Color.GREEN);
+//        balls[1] = new Ball(200, 300, 25, 6, 0, Color.YELLOW);
+//        balls[2] = new Ball(330, 300, 25, -1, 0, Color.CYAN);
+//        balls[3] = new Ball(400, 300, 25, 4, 0, Color.PINK);
+//        balls[4] = new Ball(550, 300, 25, -3, 0, Color.MAGENTA);
+    
+    currentNumBalls = 1;
+    balls[0] = new Ball(100, 220, ballRadius, 3, 34, Ball.A_COLOR);
+//      balls[1] = new Ball(80, 350, 25, 2, -114, Color.YELLOW);
+//      balls[2] = new Ball(530, 200, 30, 3, 14, Color.GREEN);
+//      balls[3] = new Ball(400, 200, 30, 3, 14, Color.GREEN);
+//      balls[4] = new Ball(400, 150, 35, 1, -47, Color.PINK);
+//      balls[5] = new Ball(480, 220, 35, 4, 47, Color.PINK);
+//      balls[6] = new Ball(80, 150, 40, 1, -114, Color.ORANGE);
+//      balls[7] = new Ball(100, 240, 40, 2, 60, Color.ORANGE);
+//      balls[8] = new Ball(600, 450, 50, 3, -42, new Color(0, 196, 128));
+//      balls[9] = new Ball(200, 80, 70, 6, -84, Color.CYAN);
+//      balls[10] = new Ball(500, 170, 90, 6, -42, Color.MAGENTA);
+    
+    // The rest of the balls, that can be launched using the launch button
+    // Allocate the balls, but position before the launch.
+//      for (int i = currentNumBalls; i < MAX_BALLS; i++) {
+//         balls[i] = new Ball(16, canvasHeight - 20, 15, 0, 90, Color.RED);
+//      }
+//   
+    // Init the custom drawing panel for the box/ball
+    canvas = new DrawCanvas();
+    
+    // Init the control panel
+    control = new ControlPanel();
+    
+    // Layout the drawing panel and control panel
+    this.setLayout(new BorderLayout());
+    this.add(canvas, BorderLayout.CENTER);
+    this.add(control, BorderLayout.EAST);
+    
+    this.addMouseListener (new MouseListener () {
+      public void mouseClicked (MouseEvent e){
+        
+      }
+      public void mouseEntered (MouseEvent e){
+        
+      }
+      public void mouseExited (MouseEvent e){
+        
+      }
+      public void mousePressed (MouseEvent e){
+        mouseX = e.getX();
+        mouseY = e.getY();
+        if (rightBox.contains (mouseX,mouseY)){
+          rX = rightBox.minX;
+          rY = rightBox.minY;
+          rightBox.clicked = true;
+        }
+        else if (leftBox.contains (mouseX,mouseY)){
+          lx = leftBox.minX;
+          ly = leftBox.minY;
+          leftBox.clicked = true;
+        }
+      }
+      public void mouseReleased (MouseEvent e){
+        rX = rightBox.minX;
+        rY = rightBox.minY;
+        rightBox.clicked = false;
+        lx = leftBox.minX;
+        ly = leftBox.minY;
+        leftBox.clicked = false;
+        yDiff = 0;
+      }
+    });
+    yDiff = 0;
+    this.addMouseMotionListener (new MouseMotionAdapter () {
+      public void mouseDragged (MouseEvent e){
+        
+        if (rightBox.clicked || leftBox.clicked){
+          yDiff = mouseY - e.getY();       
+        }
+//        mouseX = e.getX();
+//        mouseY = e.getY();
+      }
+      public void mouseMoved (MouseEvent e) {
+        
+      }      
+    });
+    // Handling window resize. Adjust container box to fill the screen.
+    this.addComponentListener(new ComponentAdapter() {
+      // Called back for first display and subsequent window resize.
+      @Override
+      public void componentResized(ComponentEvent e) {
+        Component c = (Component)e.getSource();
+        Dimension dim = c.getSize();
+        canvasWidth = dim.width - control.getWidth();
+        canvasHeight = dim.height; // Leave space for control panel
+        // Need to resize all components that is sensitive to the screen size.
+        box.set(0, 0, canvasWidth, canvasHeight);
+//            lanuchTube.set(32, canvasHeight - 160, 32, canvasHeight);
+//            cornerTopRight.set(canvasWidth, 200, canvasWidth - 90, 0);
+      }
+    });
+    
+    // Start the ball bouncing
+    gameStart();
+  }
+  
+  /** Start the ball bouncing. */
+  public void gameStart() {
+    // Run the game logic in its own thread.
+    Thread gameThread = new Thread() {
+      public void run() {
+        while (true) {
+          long beginTimeMillis, timeTakenMillis, timeLeftMillis;
+          beginTimeMillis = System.currentTimeMillis();
+          
+          if (!paused) {
+            // Execute one game step
+            gameUpdate();
+            // Refresh the display            
+          }
+          updateBallCount();
+          repaint();
+          // Provide the necessary delay to meet the target rate
+          timeTakenMillis = System.currentTimeMillis() - beginTimeMillis;
+          timeLeftMillis = 1000L / UPDATE_RATE - timeTakenMillis;
+          if (timeLeftMillis < 5) timeLeftMillis = 5; // Set a minimum
+          
+          // Delay and give other thread a chance
+          try {
+            Thread.sleep(timeLeftMillis);
+          } catch (InterruptedException ex) {}
+        }
+      }
+    };
+    gameThread.start();  // Invoke GaemThread.run()
+  }
+  
+  /** 
+   * One game time-step. 
+   * Update the game objects, with proper collision detection and response.
+   */
+  public void gameUpdate() {
+    float timeLeft = 1.0f;  // One time-step to begin with
+    for (int i = 0; i < currentNumBalls;i++){
+      balls[i].addGravity();
+    }
+    
+    
+    // Repeat until the one time-step is up 
+    do {
+      // Find the earliest collision up to timeLeft among all objects
+      float tMin = timeLeft;
+      
+      // Check collision between two balls
+      for (int i = 0; i < currentNumBalls; i++) {
+        for (int j = 0; j < currentNumBalls; j++) {
+          if (i < j) {
+            balls[i].intersect(balls[j], tMin);
+            if (balls[i].earliestCollisionResponse.t < tMin) {
+              tMin = balls[i].earliestCollisionResponse.t;
+            }
+          }
+        }
+      }
+      for (int i = 0; i < currentNumBalls; i++) {
+        // Check collision between the balls and the other obstacles
+        balls[i].intersect(box, tMin,ContainerBox.OUTER);
+        if (balls[i].earliestCollisionResponse.t < tMin) {
+          tMin = balls[i].earliestCollisionResponse.t;
+        }
+//        balls[i].intersect(horizontalLine, tMin);
+//        if (balls[i].earliestCollisionResponse.t < tMin) {
+//          tMin = balls[i].earliestCollisionResponse.t;
+//        }
+        balls[i].intersect (centreBox,tMin,ContainerBox.INNER);
+        if (balls[i].earliestCollisionResponse.t < tMin) {
+          tMin = balls[i].earliestCollisionResponse.t;
+        }
+        balls[i].intersect (rightBox,tMin,ContainerBox.INNER);
+        if (balls[i].earliestCollisionResponse.t < tMin) {
+          tMin = balls[i].earliestCollisionResponse.t;
+        }
+        balls[i].intersect (leftBox,tMin,ContainerBox.INNER);
+        if (balls[i].earliestCollisionResponse.t < tMin) {
+          tMin = balls[i].earliestCollisionResponse.t;
+        }
+//        balls[i].intersect (new ObstacleLineSegment (centreBox.minX,centreBox.minY,centreBox.minX,centreBox.maxY),tMin);
+//        if (balls[i].earliestCollisionResponse.t < tMin) {
+//          tMin = balls[i].earliestCollisionResponse.t;
+//        }
+//        balls[i].intersect (new ObstacleLineSegment (centreBox.minX,centreBox.minY,centreBox.maxX,centreBox.minY),tMin);
+//        if (balls[i].earliestCollisionResponse.t < tMin) {
+//          tMin = balls[i].earliestCollisionResponse.t;
+//        }
+//        balls[i].intersect (new ObstacleLineSegment (centreBox.maxX,centreBox.minY,centreBox.maxX,centreBox.maxY),tMin);
+//        if (balls[i].earliestCollisionResponse.t < tMin) {
+//          tMin = balls[i].earliestCollisionResponse.t;
+//        }
+//        balls[i].intersect (new ObstacleLineSegment (centreBox.minX,centreBox.maxY,centreBox.maxX,centreBox.maxY),tMin);
+//        if (balls[i].earliestCollisionResponse.t < tMin) {
+//          tMin = balls[i].earliestCollisionResponse.t;
+//        }
+        ///////////////////////////////////////////////
+//        balls[i].intersect (arbLine,tMin);
+//        if (balls[i].earliestCollisionResponse.t < tMin) {
+//          tMin = balls[i].earliestCollisionResponse.t;
+//        }
+//            balls[i].intersect(cornerTopLeft, tMin);
+//            if (balls[i].earliestCollisionResponse.t < tMin) {
+//               tMin = balls[i].earliestCollisionResponse.t;
+//            }
+//            balls[i].intersect(cornerTopRight, tMin);
+//            if (balls[i].earliestCollisionResponse.t < tMin) {
+//               tMin = balls[i].earliestCollisionResponse.t;
+//            }
+//            balls[i].intersect(lanuchTube, tMin);
+//            if (balls[i].earliestCollisionResponse.t < tMin) {
+//               tMin = balls[i].earliestCollisionResponse.t;
+//            }
+//            balls[i].intersect(polygon1, tMin);
+//            if (balls[i].earliestCollisionResponse.t < tMin) {
+//               tMin = balls[i].earliestCollisionResponse.t;
+//            }
+//            balls[i].intersect(polygon2, tMin);
+//            if (balls[i].earliestCollisionResponse.t < tMin) {
+//               tMin = balls[i].earliestCollisionResponse.t;
+//            }
+//            balls[i].intersect(line, tMin);
+//            if (balls[i].earliestCollisionResponse.t < tMin) {
+//               tMin = balls[i].earliestCollisionResponse.t;
+//            }
+//            balls[i].intersect(circle, tMin);
+//            if (balls[i].earliestCollisionResponse.t < tMin) {
+//               tMin = balls[i].earliestCollisionResponse.t;
+//            }
+      }
+      
+      // Update all the balls up to the detected earliest collision time tMin,
+      // or timeLeft if there is no collision.
+      for (int i = 0; i < currentNumBalls; i++) {
+        balls[i].update(tMin);
+      }
+      if (rightBox.clicked){
+        if (rY - yDiff >= 200 && rY - yDiff <= getHeight() - 50)
+          rightBox.set (rX,rY - yDiff,rightBox.getWidth(),rightBox.getHeight());
+      }
+      else if (leftBox.clicked){
+        if (ly - yDiff >= 200 && ly - yDiff <= getHeight() - 50)
+          leftBox.set (lx,ly - yDiff,leftBox.getWidth(),leftBox.getHeight());
+      }
+      for (int i = 0; i < currentNumBalls; i++) {
+        if (balls[i].x >= canvasWidth/2 + 25 && balls[i].y > rightBox.minY - balls[i].radius){
+          balls[i].y = rightBox.minY - balls[i].radius;
+          if (balls[i].speedY > 0){
+            balls[i].speedY = -balls[i].speedY;
+          }
+        }
+        else if (balls[i].x <= canvasWidth/2 - 25 && balls[i].y > leftBox.minY - balls[i].radius){
+          balls[i].y = leftBox.minY - balls[i].radius;
+          if (balls[i].speedY > 0){
+            balls[i].speedY = -balls[i].speedY;
+          }
+        }
+      }
+      timeLeft -= tMin;                // Subtract the time consumed and repeat
+    } while (timeLeft > EPSILON_TIME);  // Ignore remaining time less than threshold
+    for (int i = 0;i < currentNumBalls;i++){
+      if (leftBox.contains ((int)balls[i].x,(int)balls[i].y) || 
+          rightBox.contains ((int)balls[i].x,(int)balls[i].y) || 
+          centreBox.contains ((int)balls[i].x,(int)balls[i].y)){
+        currentNumBalls--;
+        remove (balls,i);
+      }
+    }
+  }
+  
+  public void updateBallCount (){
+    aBalls = 0;bBalls = 0;
+    for (int i = 0; i < currentNumBalls; i++) {
+      if (balls[i].getColor() == Ball.A_COLOR){
+        aBalls++;
+      }
+      else{
+        bBalls++;
+      }
+    }
+  }
+  /** The custom drawing panel for the bouncing ball (inner class). */
+  class DrawCanvas extends JPanel {
+    /** Custom drawing codes */
+    
+    @Override
+    public void paintComponent(Graphics g) {
+      super.paintComponent(g);    // Paint background
+      
+      // Draw the box, obstacles and balls
+      box.draw(g);
+//         cornerTopLeft.draw(g);
+//         cornerTopRight.draw(g);
+//         lanuchTube.draw(g);
+//         polygon1.draw(g);
+//         polygon2.draw(g);
+//         line.draw(g);
+//         circle.draw(g);
+//      horizontalLine.draw(g);
+      centreBox.draw (g);
+      rightBox.draw (g);
+      leftBox.draw (g);
+//      arbLine.draw(g);
+      int totalEnergy = 0;
+      for (int i = 0; i < currentNumBalls; i++) {
+        totalEnergy += balls[i].getKineticEnergy();
+        balls[i].draw(g);
+      }
+      // Display balls' information
+//      g.setColor(Color.BLUE);
+//      g.setFont(new Font("Courier New", Font.PLAIN, 12));
+//      int line;
+//      for (line = 0; line < currentNumBalls; line++) {
+//        g.drawString("Ball " + (line+1) + " " + balls[line].toString(), 42, 20 + line*20);
+//      }
+      g.setColor (Color.WHITE);
+      g.drawString ("Mouse location: (" + mouseX + ", " + mouseY + ")",42,500);
+      g.drawString ("A balls : " + aBalls + " | B balls: " + bBalls,42,520);
+//      g.drawString("Total Energy: " + (int)totalEnergy, 42, 20 + line*20);
+    }
+    
+    /** Called back to get the preferred size of the component. */
+    @Override
+    public Dimension getPreferredSize() {
+      return (new Dimension(canvasWidth, canvasHeight));
+    }
+    
+  }
+  
+  /** The control panel (inner class). */
+  class ControlPanel extends JPanel {
+    
+    public final static int MAX_FONT_SIZE = 40;
+    public final static int MIN_FONT_SIZE = 5;
+    private BufferedImage thermoImg = loadImage ("Images/thermometer.png");
+    private int width,height;
+    public  Random rand = new Random();
+    JLabel aNumLabel,bNumLabel; //labels here to change the text
+    //height of panel is 566, height of all components is 385; hModify should be 91
+    private int hModify = 0;
+    /** Constructor to initialize UI components */
+    public ControlPanel() {
+      SpringLayout layout = new SpringLayout ();
+      this.setLayout (layout);
+      Color backColor = new Color (13,77,77);
+      setBackground (backColor);
+      //Labels and buttons to control and display the number of particles
+      JLabel aLabel = new JLabel ("A Particles");
+      JLabel bLabel = new JLabel ("B Particles");
+      aLabel.setForeground (Color.WHITE);
+      bLabel.setForeground (Color.WHITE);
+//      ImageIcon plus = new ImageIcon ("plus.png");//Color rgb = (153,217,234) hsb = (128,158,182)
+//      ImageIcon minus = new ImageIcon ("minus.png");//Color rgb (0,162,232) hsb = (132,240,109)
+      Dimension standardDimension = new Dimension (40,25);
+      final JButton aAddButton = new CleanButton ("Images/plus.png","Images/plusPress.png", standardDimension,new Color (153,217,234));
+      JButton aRemoveButton = new CleanButton ("Images/minus.png","Images/minusPress.png", standardDimension,new Color (0,162,232));
+      final JButton bAddButton = new CleanButton ("Images/plus.png","Images/plusPress.png", standardDimension,new Color (153,217,234));
+      JButton bRemoveButton = new CleanButton ("Images/minus.png","Images/minusPress.png", standardDimension,new Color (0,162,232));
+      
+      add (aLabel);
+      add (bLabel);
+      add (aAddButton);
+      add (aRemoveButton);
+      add (bAddButton);
+      add (bRemoveButton);
+      //a label
+      layout.putConstraint (SpringLayout.WEST,aLabel,10,SpringLayout.WEST,this);
+      layout.putConstraint (SpringLayout.NORTH,aLabel,70 +hModify,SpringLayout.NORTH,this);
+      // A Buttons
+      layout.putConstraint (SpringLayout.WEST,aAddButton,10,SpringLayout.WEST,this);
+      layout.putConstraint (SpringLayout.NORTH,aAddButton,0,SpringLayout.SOUTH,aLabel);
+      layout.putConstraint (SpringLayout.WEST,aRemoveButton,0,SpringLayout.EAST,aAddButton);
+      layout.putConstraint (SpringLayout.NORTH,aRemoveButton,0,SpringLayout.SOUTH,aLabel);
+      //B Label
+      layout.putConstraint (SpringLayout.NORTH,bLabel,70 + hModify,SpringLayout.NORTH,this);
+      layout.putConstraint (SpringLayout.WEST,bLabel,100,SpringLayout.EAST,aLabel);
+      
+      //B Buttons
+      layout.putConstraint (SpringLayout.WEST,bAddButton,100,SpringLayout.EAST,aLabel);
+      layout.putConstraint (SpringLayout.NORTH,bAddButton,0,SpringLayout.SOUTH,bLabel);
+      layout.putConstraint (SpringLayout.WEST,bRemoveButton,0,SpringLayout.EAST,bAddButton);
+      layout.putConstraint (SpringLayout.NORTH,bRemoveButton,0,SpringLayout.SOUTH,bLabel);
+      
+      
+      
+      aAddButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          if (currentNumBalls < MAX_BALLS) {
+            balls[currentNumBalls] = new Ball(rand.nextInt((canvasWidth/2)- 40) + 10, rand.nextInt(20) + leftBox.minY - 40, ballRadius, rand.nextInt (5) + 1, rand.nextInt (90), Ball.A_COLOR);//10 - 370x, -40 - -20 y
+            currentNumBalls++;
+            if (currentNumBalls == MAX_BALLS) {
+              // Disable the button, as there is no more ball
+              aAddButton.setEnabled(false);
+              bAddButton.setEnabled(false);
+            }
+          }
+          transferFocusUpCycle();  // To handle key events
+        }
+      });
+      aRemoveButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          for (int i = currentNumBalls - 1;i >= 0;i--){
+            if (balls[i].getColor() == Ball.A_COLOR){
+              currentNumBalls--;
+              remove (balls,i);              
+              break;
+            }
+          }
+          if (currentNumBalls < MAX_BALLS){
+            aAddButton.setEnabled(true);
+            bAddButton.setEnabled(true);
+          }
+          transferFocusUpCycle();  // To handle key events
+        }       
+      });
+      //B Buttons
+      bAddButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          if (currentNumBalls < MAX_BALLS) {
+            balls[currentNumBalls] = new Ball(rand.nextInt((canvasWidth/2)- 40) + 380, rand.nextInt(20) + rightBox.minY - 40, ballRadius, rand.nextInt (5) + 1, rand.nextInt (90) + 90, Ball.B_COLOR);
+            currentNumBalls++;
+            if (currentNumBalls == MAX_BALLS) {
+              // Disable the button, as there is no more ball
+              aAddButton.setEnabled(false);
+              bAddButton.setEnabled(false);
+            }
+          }
+          transferFocusUpCycle();  // To handle key events
+        }
+      });
+      bRemoveButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          for (int i = currentNumBalls - 1;i >= 0;i--){
+            if (balls[i].getColor() == Ball.B_COLOR){
+              currentNumBalls--;
+              remove (balls,i);              
+              break;
+            }
+          }
+          if (currentNumBalls < MAX_BALLS){
+            aAddButton.setEnabled(true);
+            bAddButton.setEnabled(true);
+          }
+          transferFocusUpCycle();  // To handle key events
+        }       
+      });
+      //Labels to display the number of particles
+      aNumLabel = new JLabel ("# of A particles");
+      bNumLabel = new JLabel ("# of B particles");
+      add (aNumLabel);
+      add (bNumLabel);
+      aNumLabel.setForeground (Color.WHITE);
+      bNumLabel.setForeground (Color.WHITE);
+      
+      layout.putConstraint (SpringLayout.WEST,aNumLabel,10,SpringLayout.WEST,this);
+      layout.putConstraint (SpringLayout.NORTH,aNumLabel,10,SpringLayout.SOUTH,aAddButton);
+      
+      layout.putConstraint (SpringLayout.WEST,bNumLabel,100,SpringLayout.EAST,aLabel);
+      layout.putConstraint (SpringLayout.NORTH,bNumLabel,10,SpringLayout.SOUTH,bAddButton);
+      // A checkbox to toggle pause/resume movement
+      JCheckBox pauseControl = new JCheckBox();
+      pauseControl.setBackground (new Color (13,77,77));
+      JLabel pauseLabel = new JLabel ("Pause");
+      pauseLabel.setForeground (Color.WHITE);
+      this.add(pauseLabel);
+      this.add(pauseControl);
+      pauseControl.addItemListener(new ItemListener() {
+        @Override
+        public void itemStateChanged(ItemEvent e) {
+          paused = !paused;  // Toggle pause/resume flag
+          transferFocusUpCycle();  // To handle key events
+        }
+      });
+      layout.putConstraint (SpringLayout.WEST,pauseLabel,10,SpringLayout.WEST,this);
+      layout.putConstraint (SpringLayout.NORTH,pauseLabel,10,SpringLayout.SOUTH,aNumLabel);
+      
+      layout.putConstraint (SpringLayout.WEST,pauseControl,10,SpringLayout.EAST,pauseLabel);
+      layout.putConstraint (SpringLayout.NORTH,pauseControl,10,SpringLayout.SOUTH,aNumLabel);
+      
+      //Buttons for adjusting the speed of the balls by a factor
+      JLabel tempLabel = new JLabel ("Temperature:");
+      tempLabel.setForeground (Color.WHITE);
+      JButton tempUp = new CleanButton ("Images/plus.png","Images/plusPress.png", standardDimension,new Color (153,217,234));
+      JButton tempDown = new CleanButton ("Images/minus.png","Images/minusPress.png", standardDimension,new Color (0,162,232));
+      this.add (tempLabel);
+      this.add (tempUp);
+      this.add (tempDown);
+      tempUp.addActionListener (new ActionListener (){
+        @Override
+        public void actionPerformed (ActionEvent ae)
+        {
+          for (int i = 0;i < currentNumBalls;i++){
+            balls[i].speedX *= 1.1;
+            balls[i].speedY *= 1.1;
+          }
+        }
+      });
+       tempDown.addActionListener (new ActionListener (){
+        @Override
+        public void actionPerformed (ActionEvent ae)
+        {
+          for (int i = 0;i < currentNumBalls;i++){
+            balls[i].speedX *= 0.9;
+            balls[i].speedY *= 0.9;
+          }
+        }
+      });
+      layout.putConstraint (SpringLayout.WEST,tempLabel,10,SpringLayout.WEST,this);
+      layout.putConstraint (SpringLayout.NORTH,tempLabel,10,SpringLayout.SOUTH,pauseLabel);
+      
+      layout.putConstraint (SpringLayout.WEST,tempUp,10,SpringLayout.WEST,this);
+      layout.putConstraint (SpringLayout.NORTH,tempUp,0,SpringLayout.SOUTH,tempLabel);
+      
+      layout.putConstraint (SpringLayout.WEST,tempDown,0,SpringLayout.EAST,tempUp);
+      layout.putConstraint (SpringLayout.NORTH,tempDown,0,SpringLayout.SOUTH,tempLabel);
+      //could add a sliding temperature mechanism
+      //Help Button
+      JButton helpButton = new CleanButton ("Images/help.png","Images/helpPress.png",standardDimension,new Color (163,73,164));
+      add (helpButton);
+      helpButton.addActionListener (new ActionListener (){
+        public void actionPerformed (ActionEvent ae)
+        {
+          new HelpFrame();
+        }
+      });
+      layout.putConstraint (SpringLayout.WEST,helpButton,10,SpringLayout.WEST,this);
+      layout.putConstraint (SpringLayout.NORTH,helpButton,135,SpringLayout.SOUTH,tempUp);
+      //Set the container size
+      layout.putConstraint (SpringLayout.SOUTH,this,170,SpringLayout.SOUTH,tempUp);
+      layout.putConstraint (SpringLayout.EAST,this,20,SpringLayout.EAST,bRemoveButton);
+      
+      
+    }
+    @Override
+    public void paintComponent (Graphics g)
+    {
+      super.paintComponent (g);
+      g.setColor (Color.WHITE);
+      //top Arrow
+      g.drawLine (getWidth()/2 - 25,30 + hModify,getWidth()/2 + 25,30 + hModify);
+      g.drawLine (getWidth()/2 + 25,30 + hModify,getWidth()/2 + 10,15 + hModify);
+      //Bottom Arrow
+      g.drawLine (getWidth()/2 - 25,50 + hModify,getWidth()/2 + 25,50 + hModify);
+      g.drawLine (getWidth()/2 - 25,50 + hModify,getWidth()/2 - 10,65 + hModify);
+      
+      int aFontSize = aBalls > MIN_FONT_SIZE ? Math.min (aBalls,MAX_FONT_SIZE) : MIN_FONT_SIZE;
+      int bFontSize = bBalls > MIN_FONT_SIZE ? Math.min (bBalls,MAX_FONT_SIZE) : MIN_FONT_SIZE;
+      Font aFont = new Font ("SansSerif",Font.PLAIN,aFontSize);
+      Font bFont = new Font ("SansSerif",Font.PLAIN,bFontSize);
+      int aWidth = g.getFontMetrics (aFont).charWidth ('A');
+      int aHeight = g.getFontMetrics (aFont).getHeight();
+      int bWidth = g.getFontMetrics (bFont).charWidth ('B');
+      int bHeight = g.getFontMetrics (bFont).getHeight();
+      g.setFont (aFont);
+      g.drawString ("A",getWidth()/4 - aWidth,40 + (aHeight/4) + hModify);
+      g.setFont (bFont);
+      g.drawString ("B",(getWidth()/2 + getWidth()/4) - bWidth,40 + (bHeight/4) + hModify);
+      
+      //energy
+      int totalEnergy = 0;
+      for (int i = 0; i < currentNumBalls; i++) {
+        totalEnergy += balls[i].getKineticEnergy();
+      }
+      totalEnergy /= currentNumBalls > 0? currentNumBalls : 1;
+//      g.setFont (new Font ("SansSerif", Font.PLAIN, 15));
+//      g.drawString ("energy: " + totalEnergy, 20,300);
+      int adptEnergy = Math.max (305 - (totalEnergy),175);
+      int energyHeight = 315 - adptEnergy;
+      g.drawImage (thermoImg,getWidth() - 140,165 + hModify,null);//center at 43 // color rgb (43,0,0) hsb (0,100,16.9)
+      Color darkRed = new Color (43,0,0);
+      g.setColor (darkRed);
+      g.fillRect ((getWidth() - 140 + 43) - 10,adptEnergy + hModify,20,energyHeight);//max height starts at 160 //min height at 290
+      //Set text of the num labels
+      aNumLabel.setText ("<html># of A particles: <br>" + aBalls + "</html>");
+      bNumLabel.setText ("<html># of B particles: <br>" + bBalls + "</html>");
+    }
+    
+  }
+  
+  class CleanButton extends JButton {
+    public CleanButton (String image, String pressImage, Dimension dimension,Color backgroundColor)
+    {
+      ImageIcon imageIcon = new ImageIcon (image);
+    Image img1 = imageIcon.getImage();
+    img1 = img1.getScaledInstance ((int)dimension.getWidth(),(int)dimension.getHeight(),Image.SCALE_SMOOTH);
+    imageIcon = new ImageIcon (img1);
+    setIcon (imageIcon);
+    setMargin (new Insets (0,0,0,0));
+    setBorderPainted (false);
+    setBackground (backgroundColor);
+    setSize (dimension);
+    
+    //Don't really need right now
+//    ImageIcon rolloverIcon = new ImageIcon (rollImage);
+//    Image img2 = rolloverIcon.getImage();
+//    img2 = img2.getScaledInstance (dimension.getWidth(),dimension.getHeight(),Image.SCALE_SMOOTH);
+//    rolloverIcon = new ImageIcon (img2);
+//    
+//    setRolloverIcon (rolloverIcon);
+//    setRolloverEnabled (true);
+        ImageIcon pressIcon = new ImageIcon (pressImage);
+    Image img2 = pressIcon.getImage();
+    img2 = img2.getScaledInstance ((int)dimension.getWidth(),(int)dimension.getHeight(),Image.SCALE_SMOOTH);
+    pressIcon = new ImageIcon (img2);
+    setPressedIcon (pressIcon);
+    setFocusPainted (false);
+    //The buttons actually look nicer with a border
+    //This gets rid of the annoying one though when pressing the button
+    setBorder (null);
+    }
+  }
+  
+  class HelpFrame extends JFrame
+  {
+    public HelpFrame ()
+    {
+      super ("Program Guide");
+      ImageIcon img = new ImageIcon ("Images/EquilibriumSimulatorGuide.png");
+      JPanel panel = new JPanel();
+      JLabel background = new JLabel (img);
+      panel.add (background);
+      add (panel);
+      pack();
+      setVisible (true);      
+    }
+  }
+  //assume index is within the size of the array
+    public static void remove (Ball[] balls,int index){
+      for (int i = index;i < balls.length - 1;i++){
+        balls[i] = balls[i + 1];
+      }
+      balls[balls.length - 1] = null;
+    }
+  public static BufferedImage loadImage (String image)
+  {
+    BufferedImage img = null;
+    try {
+      img = ImageIO.read (new File (image));
+    }
+    catch (IOException e){
+      System.out.println ("Error Loading image");
+    }
+    return img;
+    }
+  }

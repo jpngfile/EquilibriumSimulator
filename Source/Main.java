@@ -1,0 +1,32 @@
+import javax.swing.JFrame;
+import java.awt.event.*;
+import java.awt.Toolkit;
+import java.awt.Dimension;
+import javax.swing.ImageIcon;
+/**
+ * Main Program for running the bouncing ball as a standalone application.
+ * 
+ * @author Hock-Chuan Chua  by Jason P'ng
+ * @version June 2015
+ */
+public class Main {
+   // Entry main program
+   public static void main(String[] args) {
+      // Run UI in the Event Dispatcher Thread (EDT), instead of Main thread
+      javax.swing.SwingUtilities.invokeLater(new Runnable() {
+         public void run() {
+            JFrame frame = new JFrame("Equilibrium Simulator");
+            ImageIcon icon = new ImageIcon ("Images/icon.png");
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setContentPane(new BallWorld (700,400)); // BallWorld is a JPanel           
+            frame.setResizable (false);
+            frame.setIconImage (icon.getImage());
+            frame.pack();            // Preferred size of BallWorld
+//            Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+//            frame.setLocation (dim.width/2 - frame.getSize().width/2, dim.height/2 - frame.getSize().height/2);
+            frame.setLocationRelativeTo (null);//centres the frame
+            frame.setVisible(true);  // Show it
+         }
+      });
+   }
+}
